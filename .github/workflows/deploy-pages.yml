@@ -29,6 +29,28 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
+      - name: Verify mobile cache compatibility aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          build_dir="./WebGLBuild/Build"
+          index_file="./WebGLBuild/index.html"
+          loader_file="$(sed -n 's/.*loaderUrl = buildUrl + "\/\([^"]*\)".*/\1/p' "$index_file")"
+          framework_file="$(sed -n 's/.*frameworkUrl: buildUrl + "\/\([^"]*\)".*/\1/p' "$index_file")"
+          wasm_file="$(sed -n 's/.*codeUrl: buildUrl + "\/\([^"]*\)".*/\1/p' "$index_file")"
+          data_file="$(sed -n 's/.*dataUrl: buildUrl + "\/\([^"]*\)".*/\1/p' "$index_file")"
+
+          test -n "$loader_file"
+          test -n "$framework_file"
+          test -n "$wasm_file"
+          test -n "$data_file"
+
+          cmp "$build_dir/$loader_file" "$build_dir/WebGLBuild.loader.js"
+          cmp "$build_dir/$framework_file" "$build_dir/WebGLBuild.framework.js.unityweb"
+          cmp "$build_dir/$wasm_file" "$build_dir/WebGLBuild.wasm.unityweb"
+          cmp "$build_dir/$data_file" "$build_dir/WebGLBuild.data.unityweb"
+
       - name: Upload Unity WebGL artifact
         uses: actions/upload-pages-artifact@v5
         with:
